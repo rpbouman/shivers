@@ -186,6 +186,23 @@ var ShiversNetwork;
     }
     return tableVisNodeData;
   },
+  getVisNodeDataForDbViewNode: function(tableNode){
+    var attributes = extractAttributes(tableNode, ["schemaName", "columnObjectName"]);
+    var tableId = this.parseSchemaObjectName(attributes.columnObjectName);
+    var columnObjectInfo = {
+      packageName: tableId.packageName, 
+      localName: tableId.localName, 
+      schemaName: attributes.schemaName, 
+      type: "dbview"
+    };
+    var dbViewVisNodeData = this.findVisNodeData(columnObjectInfo);
+    if (!dbViewVisNodeData) {
+      dbViewVisNodeData = this.getVisNodeData(columnObjectInfo);
+      var schemaVisNodeData = this.getVisNodeDataForSchema(attributes.schemaName);
+      this.createVisEdgeData(dbViewVisNodeData, schemaVisNodeData);
+    }
+    return dbViewVisNodeData;
+  },
   parseResourceUri: function(resourceUri){
     var parts = resourceUri.split("/");
     var pkg = parts[1];
@@ -309,6 +326,11 @@ var ShiversNetwork;
           case "DATA_BASE_TABLE":
             var columnObject = extractChildElement(node, "columnObject");
             var columnObjectVisNodeData = this.getVisNodeDataForTableNode(columnObject);
+            this.createVisEdgeData(calculationViewNode.id, columnObjectVisNodeData.id);
+            break;
+          case "DATA_BASE_VIEW":
+            var columnObject = extractChildElement(node, "columnObject");
+            var columnObjectVisNodeData = this.getVisNodeDataForDbViewNode(columnObject);
             this.createVisEdgeData(calculationViewNode.id, columnObjectVisNodeData.id);
             break;
           default:
